@@ -66,8 +66,7 @@ class Experiment:
         self.run_experiment()
 
     def fair_aware_multicalibration(
-        self,  # The above code is not valid Python code. It seems to
-        # contain some random text ("alpha") and comments ("
+        self, 
         alpha,
         w1=1,
         w2=0,
@@ -1709,7 +1708,7 @@ def main():
 
         w1 = 1
         w2 = 0
-        exp_art.fair_aware_multicalibration(alpha=0.00001, w1=w1, w2=w2)
+        exp_art.fair_aware_multicalibration(alpha=0.0001, w1=w1, w2=w2)
         # exp_art.multicalibration(alpha=0.0001)
         exp_art.compute_cell_prob_matrix()
         exp_art.run_experiment()
