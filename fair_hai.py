@@ -1,3 +1,4 @@
+import argparse
 from human_ai_interactions_data import haiid
 from sklearn.metrics import roc_auc_score, accuracy_score, r2_score
 from sklearn.metrics import roc_curve
@@ -66,7 +67,8 @@ class Experiment:
         self.run_experiment()
 
     def fair_aware_multicalibration(
-        self, 
+        self,  # The above code is not valid Python code. It seems to
+        # contain some random text ("alpha") and comments ("
         alpha,
         w1=1,
         w2=0,
@@ -1301,9 +1303,11 @@ def alignment_barplot(df, bar_hatches, min_cell_mass, name):
         suffixes=("_female", "_male"),
     )
 
+    # 添加辅助列以进行笛卡尔积
     female_data["key"] = 1
     male_data["key"] = 1
 
+    # 笛卡尔积合并
     merged_data_decare = pd.merge(
         female_data, male_data, on="key", suffixes=("_female", "_male")
     ).drop("key", axis=1)
@@ -1447,9 +1451,11 @@ def fairness_alignment_barplot(df, bar_hatches, min_cell_mass, name):
         .reset_index()
     )
 
+    # 添加辅助列以进行笛卡尔积
     female_data["key"] = 1
     male_data["key"] = 1
 
+    # 笛卡尔积合并
     merged_data_decare = pd.merge(
         female_data, male_data, on="key", suffixes=("_female", "_male")
     ).drop("key", axis=1)
@@ -1526,6 +1532,7 @@ def fairness_alignment_barplot(df, bar_hatches, min_cell_mass, name):
     for i, line in enumerate(bar2.get_lines()):
         line.set_alpha(1)
         line.set_linewidth(1)
+    # 添加误差条
     # for patch, std in zip(bar1.patches, filtered_data["y_diff_std"]):
     #     height = patch.get_height()
     #     bar1.errorbar(
@@ -1688,7 +1695,7 @@ def plot_histogram_cells(df, name):
     plt.close()
 
 
-def main():
+def main(method):
     before_calibration_results = []
     after_calibration_results = []
     for k in range(100):
@@ -1706,28 +1713,36 @@ def main():
         before_calibration_results.append(df_results)
         print("Before Calibration:\n", df_results)
 
-        w1 = 1
-        w2 = 0
-        exp_art.fair_aware_multicalibration(alpha=0.0001, w1=w1, w2=w2)
-        # exp_art.multicalibration(alpha=0.0001)
+         # Setting the method to use for calibration
+        if method == 'fair':
+            # Apply fair_aware_multicalibration
+            w1 = 1
+            w2 = 0
+            exp_art.fair_aware_multicalibration(alpha=0.0001, w1=w1, w2=w2)
+            exp_sarcasm.fair_aware_multicalibration(alpha=0.0001, w1=w1, w2=w2)
+            exp_cities.fair_aware_multicalibration(alpha=0.0001, w1=w1, w2=w2)
+            exp_census.fair_aware_multicalibration(alpha=0.0001, w1=w1, w2=w2)
+        else:
+            # Apply regular multicalibration
+            exp_art.multicalibration(alpha=0.0001)
+            exp_sarcasm.multicalibration(alpha=0.0001)
+            exp_cities.multicalibration(alpha=0.0001)
+            exp_census.multicalibration(alpha=0.0001)
+
+        # Compute the cell probability matrix and run the experiment
         exp_art.compute_cell_prob_matrix()
         exp_art.run_experiment()
 
-        exp_sarcasm.fair_aware_multicalibration(alpha=0.0001, w1=w1, w2=w2)
-        # exp_sarcasm.multicalibration(alpha=0.0001)
         exp_sarcasm.compute_cell_prob_matrix()
         exp_sarcasm.run_experiment()
 
-        exp_cities.fair_aware_multicalibration(alpha=0.0001, w1=w1, w2=w2)
-        # exp_cities.multicalibration(alpha=0.0001)
         exp_cities.compute_cell_prob_matrix()
         exp_cities.run_experiment()
 
-        exp_census.fair_aware_multicalibration(alpha=0.0001, w1=w1, w2=w2)
-        # exp_census.multicalibration(alpha=0.0001)
         exp_census.compute_cell_prob_matrix()
         exp_census.run_experiment()
 
+        # Collect the results after calibration
         df_results = exp_art.get_metrics()
         df_results = pd.concat([df_results, exp_sarcasm.get_metrics()])
         df_results = pd.concat([df_results, exp_cities.get_metrics()])
@@ -1736,13 +1751,22 @@ def main():
         after_calibration_results.append(df_results)
         print("After Calibration:\n", df_results)
 
-    # Save results to files
-    with open("before_calibration_results_v6.pkl", "wb") as f:
+    # Save results to files with conditional naming
+    before_file_name = "before_fair_calibration_results.pkl" if method == 'fair' else "before_calibration_results.pkl"
+    after_file_name = "after_fair_calibration_results.pkl" if method == 'fair' else "after_calibration_results.pkl"
+
+    with open(before_file_name, "wb") as f:
         pickle.dump(before_calibration_results, f)
 
-    with open("after_calibration_results_v6.pkl", "wb") as f:
+    with open(after_file_name, "wb") as f:
         pickle.dump(after_calibration_results, f)
 
-
 if __name__ == "__main__":
-    main()
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Run experiments with calibration methods")
+    parser.add_argument('--method', choices=['fair', 'standard'], default='standard', 
+                        help="Specify the calibration method: 'fair' for fair_aware_multicalibration, 'standard' for multicalibration")
+    args = parser.parse_args()
+
+    # Run the main function with the selected method
+    main(args.method)
