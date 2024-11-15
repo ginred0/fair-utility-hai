@@ -1765,7 +1765,7 @@ if __name__ == "__main__":
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Run experiments with calibration methods")
     parser.add_argument('--method', choices=['fair', 'standard'], default='standard', 
-                        help="Specify the calibration method: 'fair' for fair_aware_multicalibration, 'standard' for multicalibration")
+                        help="Specify the calibration method: 'fair' for group-level multicalibration, 'standard' for multicalibration")
     args = parser.parse_args()
 
     # Run the main function with the selected method
