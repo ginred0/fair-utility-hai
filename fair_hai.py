@@ -800,15 +800,15 @@ class Experiment:
     def get_metrics(self):
         return self.df_metrics
 
-def main(method):
+def main(args):
     before_calibration_results = []
     after_calibration_results = []
-    for k in range(100):
+    for k in range(20):
         print(k, "-th iterations:\n")
-        exp_art = Experiment("art", h_bins=3, b_bins=8, random_state=k)
-        exp_sarcasm = Experiment("sarcasm", h_bins=3, b_bins=8, random_state=k)
-        exp_cities = Experiment("cities", h_bins=3, b_bins=8, random_state=k)
-        exp_census = Experiment("census", h_bins=3, b_bins=8, random_state=k)
+        exp_art = Experiment("art", h_bins=3, b_bins=args.b_bins, random_state=k)
+        exp_sarcasm = Experiment("sarcasm", h_bins=3, b_bins=args.b_bins, random_state=k)
+        exp_cities = Experiment("cities", h_bins=3, b_bins=args.b_bins, random_state=k)
+        exp_census = Experiment("census", h_bins=3, b_bins=args.b_bins, random_state=k)
 
         df_results = exp_art.get_metrics()
         df_results = pd.concat([df_results, exp_sarcasm.get_metrics()])
@@ -819,18 +819,18 @@ def main(method):
         print("Before Calibration:\n", df_results)
 
          # Setting the method to use for calibration
-        if method == 'fair':
+        if args.method == 'fair':
             # Apply group_level_multicalibration
-            exp_art.fair_aware_multicalibration(alpha=0.00001)
-            exp_sarcasm.fair_aware_multicalibration(alpha=0.0001)
-            exp_cities.fair_aware_multicalibration(alpha=0.0001)
-            exp_census.fair_aware_multicalibration(alpha=0.0001)
+            exp_art.fair_aware_multicalibration(alpha=1.0/args.b_bins)
+            exp_sarcasm.fair_aware_multicalibration(alpha=1.0/args.b_bins)
+            exp_cities.fair_aware_multicalibration(alpha=1.0/args.b_bins)
+            exp_census.fair_aware_multicalibration(alpha=1.0/args.b_bins)
         else:
             # Apply  multicalibration
-            exp_art.multicalibration(alpha=0.0001)
-            exp_sarcasm.multicalibration(alpha=0.0001)
-            exp_cities.multicalibration(alpha=0.0001)
-            exp_census.multicalibration(alpha=0.0001)
+            exp_art.multicalibration(alpha=1.0/args.b_bins)
+            exp_sarcasm.multicalibration(alpha=1.0/args.b_bins)
+            exp_cities.multicalibration(alpha=1.0/args.b_bins)
+            exp_census.multicalibration(alpha=1.0/args.b_bins)
 
         # Update the cell probability matrix and run the experiment
         exp_art.compute_cell_prob_matrix()
@@ -855,8 +855,8 @@ def main(method):
         print("After Calibration:\n", df_results)
 
     # Save results to files with conditional naming
-    before_file_name = "before_fair_calibration_results.pkl" if method == 'fair' else "before_calibration_results.pkl"
-    after_file_name = "after_fair_calibration_results.pkl" if method == 'fair' else "after_calibration_results.pkl"
+    before_file_name = "before_{}_calibration_results_lambda_{}.pkl".format(args.method,args.b_bins) 
+    after_file_name = "after_{}_calibration_results_lambda_{}.pkl".format(args.method,args.b_bins) 
 
     with open(before_file_name, "wb") as f:
         pickle.dump(before_calibration_results, f)
@@ -869,7 +869,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run experiments with calibration methods")
     parser.add_argument('--method', choices=['fair', 'standard'], default='standards', 
                         help="Specify the calibration method: 'fair' for group-level multicalibration, 'standard' for multicalibration")
+    parser.add_argument('--b_bins',  default=8, type=int, help="Number of discretization bins for AI confidence")
     args = parser.parse_args()
 
     # Run the main function with the selected method
-    main(args.method)
+    main(args)
